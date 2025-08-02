@@ -41,9 +41,6 @@ def compute_similarity(text1: str, text2: str) -> float:
     Args:
         text1 (str): 第一个文本
         text2 (str): 第二个文本
-
-    Returns:
-        float: 余弦相似度
     """
     embedding1 = get_embedding(text1)
     embedding2 = get_embedding(text2)
@@ -57,9 +54,6 @@ def analyze_keyword_relevance(keywords: list[str], texts: list[str]) -> str:
     Args:
         keywords (list[str]): 关键词列表
         texts (list[str]): 文本列表
-
-    Returns:
-        str: 分析结果的字符串表示
     """
     results = []
     for text in texts:
