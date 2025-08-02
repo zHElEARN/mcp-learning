@@ -19,7 +19,9 @@ export default function ConversationPage() {
   const [error, setError] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<string>("");
+  const [isUserScrolled, setIsUserScrolled] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // 获取对话数据
   useEffect(() => {
@@ -43,6 +45,9 @@ export default function ConversationPage() {
 
   const handleSendMessage = async (messageContent: string) => {
     if (isLoading || !messageContent.trim()) return;
+
+    // 重置手动滚动状态，确保新消息能自动滚动
+    setIsUserScrolled(false);
 
     // 添加用户消息
     const userMessage: Message = {
@@ -137,8 +142,33 @@ export default function ConversationPage() {
 
   // 自动滚动到最新消息
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messageList]);
+    // 只有在用户没有手动滚动时才自动滚动
+    if (!isUserScrolled) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messageList, isUserScrolled]);
+
+  // 检测用户滚动行为
+  useEffect(() => {
+    const chatContainer = chatContainerRef.current;
+    if (!chatContainer) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50; // 50px 容差
+
+      // 如果用户滚动到了底部，重置手动滚动状态
+      if (isAtBottom) {
+        setIsUserScrolled(false);
+      } else {
+        // 如果用户向上滚动，标记为手动滚动
+        setIsUserScrolled(true);
+      }
+    };
+
+    chatContainer.addEventListener("scroll", handleScroll);
+    return () => chatContainer.removeEventListener("scroll", handleScroll);
+  }, [chatContainerRef.current]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -180,7 +210,7 @@ export default function ConversationPage() {
           />
 
           {/* 对话区域 */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4">
             <div className="max-w-4xl mx-auto space-y-6">
               {messageList.map((message) => (
                 <div
