@@ -58,7 +58,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="p-4">
+    <div className="px-4 py-2">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col gap-2 bg-background rounded-lg border shadow-sm">
           {/* 主输入区域 */}

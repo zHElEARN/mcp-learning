@@ -13,12 +13,12 @@ export function ToolBlock({
   const [showDetail, setShowDetail] = useState(true);
   const [activeTab, setActiveTab] = useState<"result" | "args">("args");
 
-  const parseChildren = () => {
-    if (!children) return { args: null, result: null };
+  const parseContent = (children?: React.ReactNode) => {
+    if (!children) return { args: "", result: "" };
 
     const childArray = Array.isArray(children) ? children : [children];
-    let args = null;
-    let result = null;
+    let args = "";
+    let result = "";
 
     childArray.forEach((child) => {
       if (
@@ -32,35 +32,26 @@ export function ToolBlock({
           props: { children?: React.ReactNode };
         };
         if (element.key && element.key.startsWith("tool-args")) {
-          args = element.props?.children;
+          args = element.props?.children
+            ? String(element.props.children).trim()
+            : "";
         } else if (element.key && element.key.startsWith("tool-result")) {
-          result = element.props?.children;
+          result = element.props?.children
+            ? String(element.props.children).trim()
+            : "";
         }
       }
     });
 
+    try {
+      args = args ? JSON.stringify(JSON.parse(args), null, 2) : args;
+      result = result ? JSON.stringify(JSON.parse(result), null, 2) : result;
+    } catch {}
+
     return { args, result };
   };
 
-  const { args, result } = parseChildren();
-
-  const parsed: {
-    args: string;
-    result: string;
-  } = (() => {
-    if (!args) return { args: "", result: "" };
-    if (!result) return { args: "", result: "" };
-    const argsText = String(args).trim();
-    const resultText = String(result).trim();
-    try {
-      return {
-        args: JSON.stringify(JSON.parse(argsText), null, 2),
-        result: JSON.stringify(JSON.parse(resultText), null, 2),
-      };
-    } catch {
-      return { args: argsText, result: resultText };
-    }
-  })();
+  const { args, result } = parseContent(children);
 
   return (
     <div className="border border-gray-300 rounded-lg bg-white shadow-sm w-full my-2">
@@ -95,19 +86,6 @@ export function ToolBlock({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setActiveTab("result");
-              }}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "result"
-                  ? "border-blue-500 text-blue-600 bg-blue-50"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              结果
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
                 setActiveTab("args");
               }}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
@@ -118,12 +96,25 @@ export function ToolBlock({
             >
               参数
             </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveTab("result");
+              }}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "result"
+                  ? "border-blue-500 text-blue-600 bg-blue-50"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              结果
+            </button>
           </div>
 
           <div className="px-4">
             <pre className="text-xs text-gray-600 bg-gray-50 p-3 rounded border overflow-x-hidden whitespace-pre-wrap break-words">
               <code className="break-all">
-                {activeTab === "result" ? parsed.result : parsed.args}
+                {activeTab === "result" ? result : args}
               </code>
             </pre>
           </div>
