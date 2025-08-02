@@ -1,10 +1,10 @@
 "use client";
 
+import { ChatHeader } from "@/components/chat-header";
+import { ChatInput } from "@/components/chat-input";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { apiClient, type Message } from "@/lib/api";
-import { Bot, Copy, SendHorizontal, Trash2, User } from "lucide-react";
+import { Bot, User } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -14,12 +14,11 @@ export default function ConversationPage() {
   const conversationId = params.id as string;
 
   const [messageList, setMessageList] = useState<Message[]>([]);
-  const [inputContent, setInputContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
-  const [isComposing, setIsComposing] = useState<boolean>(false);
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 获取对话数据
@@ -42,25 +41,28 @@ export default function ConversationPage() {
     }
   }, [conversationId]);
 
-  const handleSendMessage = async () => {
-    if (isLoading || !inputContent.trim()) return;
+  const handleSendMessage = async (messageContent: string) => {
+    if (isLoading || !messageContent.trim()) return;
 
     // 添加用户消息
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: inputContent.trim(),
+      content: messageContent.trim(),
       createdAt: new Date().toISOString(),
     };
 
     setMessageList((prev) => [...prev, userMessage]);
-    const userQuery = inputContent.trim();
-    setInputContent("");
+    const userQuery = messageContent.trim();
     setIsLoading(true);
 
     try {
       // 调用聊天接口
-      const response = await apiClient.sendMessage(conversationId, userQuery);
+      const response = await apiClient.sendMessage(
+        conversationId,
+        userQuery,
+        selectedModel
+      );
 
       if (!response.ok || !response.body) {
         throw new Error("请求失败或响应体为空");
@@ -133,36 +135,6 @@ export default function ConversationPage() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // 如果正在使用输入法组合输入，则不处理回车
-    if (isComposing) return;
-
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleCompositionStart = () => {
-    setIsComposing(true);
-  };
-
-  const handleCompositionEnd = () => {
-    setIsComposing(false);
-  };
-
-  const handleClear = () => {
-    setInputContent("");
-    toast.success("输入已清除");
-  };
-
-  const handleCopy = () => {
-    if (inputContent) {
-      navigator.clipboard.writeText(inputContent);
-      toast.success("内容已复制到剪贴板");
-    }
-  };
-
   // 自动滚动到最新消息
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -200,6 +172,13 @@ export default function ConversationPage() {
       {/* 正常对话界面 */}
       {!isLoadingData && !error && (
         <>
+          {/* 顶部头部栏 */}
+          <ChatHeader
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            disabled={isLoading}
+          />
+
           {/* 对话区域 */}
           <div className="flex-1 overflow-y-auto p-4">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -304,67 +283,11 @@ export default function ConversationPage() {
           </div>
 
           {/* 用户输入区域 */}
-          <div className="bg-white border-t border-gray-200 p-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex flex-col gap-2 bg-background rounded-lg border shadow-sm">
-                {/* 主输入区域 */}
-                <textarea
-                  value={inputContent}
-                  onChange={(e) => setInputContent(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onCompositionStart={handleCompositionStart}
-                  onCompositionEnd={handleCompositionEnd}
-                  placeholder="输入你的消息..."
-                  className="flex-1 min-h-[100px] p-4 focus-visible:outline-none resize-none bg-transparent"
-                  disabled={isLoading}
-                />
-
-                {/* 底部工具条 */}
-                <div className="flex items-center justify-between p-2 border-t">
-                  {/* 左侧工具按钮 - 清除和复制按钮 */}
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={isLoading || !inputContent.trim()}
-                      onClick={handleClear}
-                      className="h-8 w-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={isLoading || !inputContent.trim()}
-                      onClick={handleCopy}
-                      className="h-8 w-8"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* 右侧发送按钮 */}
-                  <div className="flex items-center gap-1">
-                    <Separator orientation="vertical" className="h-6 mx-1" />
-
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!inputContent.trim() || isLoading}
-                      size="icon"
-                      className="rounded-full w-8 h-8"
-                    >
-                      {isLoading ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      ) : (
-                        <SendHorizontal className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            disabled={isLoading}
+            placeholder="输入你的消息..."
+          />
         </>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-export const API_BASE_URL = "http://localhost:5678";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
 export interface Message {
   id: string;
@@ -87,16 +87,27 @@ class ApiClient {
     });
   }
 
+  // 获取模型列表
+  async getModels(): Promise<string[]> {
+    return this.request<string[]>("/models");
+  }
+
   // 发送聊天消息 - 返回流式响应
-  async sendMessage(conversationId: string, query: string): Promise<Response> {
+  async sendMessage(
+    conversationId: string,
+    query: string,
+    modelName: string
+  ): Promise<Response> {
     const url = `${this.baseUrl}/conversations/${conversationId}/chat`;
+
+    const requestBody = { query, modelName };
 
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
