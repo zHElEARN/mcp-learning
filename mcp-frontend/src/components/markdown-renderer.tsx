@@ -28,7 +28,10 @@ export function MarkdownRenderer({ content }: { content: string }) {
   useEffect(() => {
     const parseMarkdown = async () => {
       const prettyCodeOptions: Options = {
-        theme: "github-light",
+        theme: {
+          dark: "github-dark",
+          light: "github-light",
+        },
         defaultLang: "text",
       };
 
@@ -85,5 +88,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
     parseMarkdown();
   }, [content]);
 
-  return <div className="prose max-w-none">{renderedContent}</div>;
+  return (
+    <div className="prose dark:prose-invert max-w-none">{renderedContent}</div>
+  );
 }

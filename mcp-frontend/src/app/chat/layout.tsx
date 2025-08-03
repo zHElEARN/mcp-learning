@@ -2,6 +2,15 @@
 
 import { ConversationsList } from "@/components/conversations-list";
 import { NewConversationDialog } from "@/components/new-conversation-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarProvider,
+  SidebarRail,
+} from "@/components/ui/sidebar";
 import { apiClient, type Conversation } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -83,30 +92,34 @@ export default function ConversationLayout({
   }, []);
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* 左侧会话列表 */}
-      <div className="w-64 bg-card border-r flex flex-col">
-        {/* 顶部新建会话按钮 */}
-        <div className="p-4 border-b bg-muted/30">
-          <NewConversationDialog
-            onCreateConversation={handleCreateConversation}
-            isCreating={isCreating}
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <NewConversationDialog
+                onCreateConversation={handleCreateConversation}
+                isCreating={isCreating}
+              />
+            </div>
+            <ThemeToggle />
+          </div>
+        </SidebarHeader>
+
+        <SidebarContent>
+          <ConversationsList
+            conversations={conversations}
+            activeConversation={activeConversation}
+            formatDate={formatDate}
+            onSetActiveConversation={setActiveConversation}
+            onDeleteConversation={handleDeleteConversation}
+            isLoading={isLoading}
           />
-        </div>
+        </SidebarContent>
+        <SidebarRail />
+      </Sidebar>
 
-        {/* 会话列表 */}
-        <ConversationsList
-          conversations={conversations}
-          activeConversation={activeConversation}
-          formatDate={formatDate}
-          onSetActiveConversation={setActiveConversation}
-          onDeleteConversation={handleDeleteConversation}
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* 右侧内容区域 */}
-      <div className="flex-1 flex flex-col">{children}</div>
-    </div>
+      <SidebarInset>{children}</SidebarInset>
+    </SidebarProvider>
   );
 }

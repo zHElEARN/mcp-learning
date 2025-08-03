@@ -1,6 +1,5 @@
 "use client";
 
-import { ChatHeader } from "@/components/chat-header";
 import { ChatInput } from "@/components/chat-input";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { apiClient, type Message } from "@/lib/api";
@@ -171,13 +170,15 @@ export default function ConversationPage() {
   }, [chatContainerRef.current]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-background">
       {/* 加载状态 */}
       {isLoadingData && (
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center space-y-4">
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <div className="text-gray-600">正在加载对话...</div>
+            <div className="text-gray-600 dark:text-gray-300">
+              正在加载对话...
+            </div>
           </div>
         </div>
       )}
@@ -187,11 +188,15 @@ export default function ConversationPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center space-y-4 text-center max-w-md">
             <div className="text-red-500 text-lg">😞</div>
-            <div className="text-gray-800 font-medium">加载失败</div>
-            <div className="text-gray-600 text-sm">{error}</div>
+            <div className="text-gray-800 dark:text-gray-200 font-medium">
+              加载失败
+            </div>
+            <div className="text-gray-600 dark:text-gray-400 text-sm">
+              {error}
+            </div>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
             >
               重新加载
             </button>
@@ -202,13 +207,6 @@ export default function ConversationPage() {
       {/* 正常对话界面 */}
       {!isLoadingData && !error && (
         <>
-          {/* 顶部头部栏 */}
-          <ChatHeader
-            selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
-            disabled={isLoading}
-          />
-
           {/* 对话区域 */}
           <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -221,8 +219,8 @@ export default function ConversationPage() {
                 >
                   {/* AI头像 - 仅在AI消息时显示在左侧 */}
                   {message.role === "assistant" && (
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Bot className="w-5 h-5 text-blue-600" />
+                    <div className="flex-shrink-0 w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                      <Bot className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                     </div>
                   )}
 
@@ -235,7 +233,7 @@ export default function ConversationPage() {
                     }`}
                   >
                     {/* 消息标识 */}
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                       {message.role === "user" && <User className="w-3 h-3" />}
                       <span className="font-medium">
                         {message.role === "user" ? "用户" : "AI助手"}
@@ -255,7 +253,7 @@ export default function ConversationPage() {
                     <div
                       className={
                         message.role === "user"
-                          ? "bg-primary text-white rounded-lg px-4 py-2 max-w-full"
+                          ? "bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-full"
                           : "w-full"
                       }
                     >
@@ -271,8 +269,8 @@ export default function ConversationPage() {
 
                   {/* 用户头像 - 仅在用户消息时显示在右侧 */}
                   {message.role === "user" && (
-                    <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-gray-600" />
+                    <div className="flex-shrink-0 w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                     </div>
                   )}
                 </div>
@@ -282,24 +280,24 @@ export default function ConversationPage() {
               {isLoading && !isStreaming && (
                 <div className="flex gap-3 justify-start">
                   {/* AI头像 */}
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-blue-600" />
+                  <div className="flex-shrink-0 w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                   </div>
 
                   {/* 加载内容 */}
                   <div className="flex flex-col space-y-1 flex-1">
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                       <span className="font-medium">AI助手</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
                         <div
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                           style={{ animationDelay: "0.1s" }}
                         ></div>
                         <div
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                           style={{ animationDelay: "0.2s" }}
                         ></div>
                       </div>
@@ -317,6 +315,8 @@ export default function ConversationPage() {
             onSendMessage={handleSendMessage}
             disabled={isLoading}
             placeholder="输入你的消息..."
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
           />
         </>
       )}

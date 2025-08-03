@@ -1,24 +1,61 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { apiClient } from "@/lib/api";
 import { Copy, SendHorizontal, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  selectedModel?: string;
+  onModelChange: (model: string) => void;
 }
 
 export function ChatInput({
   onSendMessage,
   disabled = false,
   placeholder = "输入你的消息...",
+  selectedModel,
+  onModelChange,
 }: ChatInputProps) {
   const [inputContent, setInputContent] = useState<string>("");
   const [isComposing, setIsComposing] = useState<boolean>(false);
+  const [models, setModels] = useState<string[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
+
+  // 获取模型列表
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        setIsLoadingModels(true);
+        const modelList = await apiClient.getModels();
+        setModels(modelList);
+
+        // 如果没有选中的模型且有可用模型，选择第一个
+        if (!selectedModel && modelList.length > 0) {
+          onModelChange(modelList[0]);
+        }
+      } catch (error) {
+        console.error("获取模型列表失败:", error);
+        toast.error("获取模型列表失败");
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, [selectedModel, onModelChange]);
 
   const handleSendMessage = () => {
     if (!inputContent.trim() || disabled) return;
@@ -98,9 +135,31 @@ export function ChatInput({
               </Button>
             </div>
 
-            {/* 右侧发送按钮 */}
-            <div className="flex items-center gap-1">
-              <Separator orientation="vertical" className="h-6 mx-1" />
+            {/* 右侧模型选择和发送按钮 */}
+            <div className="flex items-center gap-2">
+              {/* 模型选择 */}
+              <div className="flex items-center space-x-2">
+                <Select
+                  value={selectedModel}
+                  onValueChange={onModelChange}
+                  disabled={disabled || isLoadingModels}
+                >
+                  <SelectTrigger className="w-48 h-8 text-xs">
+                    <SelectValue
+                      placeholder={isLoadingModels ? "加载中..." : "选择模型"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {models.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator orientation="vertical" className="h-6" />
 
               <Button
                 onClick={handleSendMessage}

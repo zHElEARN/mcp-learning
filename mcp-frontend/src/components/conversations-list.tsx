@@ -142,7 +142,10 @@ export function ConversationsList({
               <div className="text-center text-gray-500 mt-8">加载中...</div>
             ) : (
               sortedConversations.map((conv) => (
-                <div key={conv.id} className="flex items-center group relative">
+                <div
+                  key={conv.id}
+                  className="flex items-center group/conversation relative"
+                >
                   <Button
                     variant={
                       conv.id === currentActiveId ? "secondary" : "ghost"
@@ -157,7 +160,7 @@ export function ConversationsList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/conversation:opacity-100 transition-opacity"
                       >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
