@@ -2,6 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -10,12 +18,12 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { apiClient } from "@/lib/api";
-import { Copy, SendHorizontal, Trash2 } from "lucide-react";
+import { Copy, SendHorizontal, Settings, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface ChatInputProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, tools?: string[]) => void;
   disabled?: boolean;
   placeholder?: string;
   selectedModel?: string;
@@ -33,6 +41,9 @@ export function ChatInput({
   const [isComposing, setIsComposing] = useState<boolean>(false);
   const [models, setModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const [tools, setTools] = useState<string[]>([]);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [isLoadingTools, setIsLoadingTools] = useState(true);
 
   // 获取模型列表
   useEffect(() => {
@@ -57,10 +68,30 @@ export function ChatInput({
     fetchModels();
   }, [selectedModel, onModelChange]);
 
+  // 获取工具列表
+  useEffect(() => {
+    const fetchTools = async () => {
+      try {
+        setIsLoadingTools(true);
+        const toolList = await apiClient.getTools();
+        setTools(toolList);
+        // 默认全选所有工具
+        setSelectedTools(toolList);
+      } catch (error) {
+        console.error("获取工具列表失败:", error);
+        toast.error("获取工具列表失败");
+      } finally {
+        setIsLoadingTools(false);
+      }
+    };
+
+    fetchTools();
+  }, []);
+
   const handleSendMessage = () => {
     if (!inputContent.trim() || disabled) return;
 
-    onSendMessage(inputContent.trim());
+    onSendMessage(inputContent.trim(), selectedTools);
     setInputContent("");
   };
 
@@ -94,6 +125,28 @@ export function ChatInput({
     }
   };
 
+  const handleSelectAllTools = () => {
+    setSelectedTools([...tools]);
+  };
+
+  const handleDeselectAllTools = () => {
+    setSelectedTools([]);
+  };
+
+  const handleInvertSelection = () => {
+    setSelectedTools((prev) => tools.filter((tool) => !prev.includes(tool)));
+  };
+
+  // 按 server 分组工具
+  const groupedTools = tools.reduce((groups, tool) => {
+    const [server, name] = tool.split(":", 2);
+    if (!groups[server]) {
+      groups[server] = [];
+    }
+    groups[server].push({ fullName: tool, name: name || tool });
+    return groups;
+  }, {} as Record<string, Array<{ fullName: string; name: string }>>);
+
   return (
     <div className="px-4 py-2">
       <div className="max-w-4xl mx-auto">
@@ -112,8 +165,112 @@ export function ChatInput({
 
           {/* 底部工具条 */}
           <div className="flex items-center justify-between p-2 border-t">
-            {/* 左侧工具按钮 - 清除和复制按钮 */}
-            <div className="flex gap-1">
+            {/* 左侧工具选择 */}
+            <div className="flex items-center gap-2">
+              {/* 工具选择 */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    disabled={disabled || isLoadingTools}
+                  >
+                    <Settings className="h-3 w-3 mr-1" />
+                    工具
+                    {selectedTools.length > 0 && `(${selectedTools.length})`}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-90 max-h-120 overflow-y-auto"
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                >
+                  <DropdownMenuLabel>选择工具</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {/* 操作按钮区域 */}
+                  {!isLoadingTools && tools.length > 0 && (
+                    <>
+                      <div className="flex gap-1 p-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-xs flex-1"
+                          onClick={handleSelectAllTools}
+                        >
+                          全选
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-xs flex-1"
+                          onClick={handleInvertSelection}
+                        >
+                          反选
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-xs flex-1"
+                          onClick={handleDeselectAllTools}
+                        >
+                          全不选
+                        </Button>
+                      </div>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {/* 工具列表 */}
+                  {isLoadingTools ? (
+                    <div className="px-2 py-1 text-sm text-muted-foreground">
+                      加载中...
+                    </div>
+                  ) : tools.length === 0 ? (
+                    <div className="px-2 py-1 text-sm text-muted-foreground">
+                      暂无可用工具
+                    </div>
+                  ) : (
+                    Object.entries(groupedTools).map(
+                      ([server, serverTools]) => (
+                        <div key={server}>
+                          <DropdownMenuLabel className="text-xs font-semibold text-primary px-2 py-1">
+                            {server}
+                          </DropdownMenuLabel>
+                          {serverTools.map(({ fullName, name }) => (
+                            <DropdownMenuCheckboxItem
+                              key={fullName}
+                              checked={selectedTools.includes(fullName)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedTools((prev) => [
+                                    ...prev,
+                                    fullName,
+                                  ]);
+                                } else {
+                                  setSelectedTools((prev) =>
+                                    prev.filter((t) => t !== fullName)
+                                  );
+                                }
+                              }}
+                              onSelect={(e) => e.preventDefault()}
+                              className="pl-6"
+                            >
+                              <div className="flex flex-col items-start">
+                                <span className="text-sm">{name}</span>
+                              </div>
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                          {Object.keys(groupedTools).indexOf(server) <
+                            Object.keys(groupedTools).length - 1 && (
+                            <DropdownMenuSeparator />
+                          )}
+                        </div>
+                      )
+                    )
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* 清除和复制按钮 */}
               <Button
                 variant="ghost"
                 size="icon"

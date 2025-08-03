@@ -92,15 +92,21 @@ class ApiClient {
     return this.request<string[]>("/models");
   }
 
+  // 获取工具列表
+  async getTools(): Promise<string[]> {
+    return this.request<string[]>("/tools/");
+  }
+
   // 发送聊天消息 - 返回流式响应
   async sendMessage(
     conversationId: string,
     query: string,
-    modelName: string
+    modelName: string,
+    tools?: string[]
   ): Promise<Response> {
     const url = `${this.baseUrl}/conversations/${conversationId}/chat`;
 
-    const requestBody = { query, modelName };
+    const requestBody = { query, modelName, tools };
 
     const response = await fetch(url, {
       method: "POST",

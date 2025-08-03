@@ -42,7 +42,7 @@ export default function ConversationPage() {
     }
   }, [conversationId]);
 
-  const handleSendMessage = async (messageContent: string) => {
+  const handleSendMessage = async (messageContent: string, tools?: string[]) => {
     if (isLoading || !messageContent.trim()) return;
 
     // 重置手动滚动状态，确保新消息能自动滚动
@@ -65,7 +65,8 @@ export default function ConversationPage() {
       const response = await apiClient.sendMessage(
         conversationId,
         userQuery,
-        selectedModel
+        selectedModel,
+        tools
       );
 
       if (!response.ok || !response.body) {
