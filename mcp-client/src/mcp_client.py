@@ -1,8 +1,8 @@
 import json
 from contextlib import AsyncExitStack
 
-from mcp import ClientSession, StdioServerParameters, stdio_client
-from openai import OpenAI
+from mcp import ClientSession, StdioServerParameters, Tool, stdio_client
+from openai import NOT_GIVEN, OpenAI
 
 
 class MCPClient:
@@ -10,6 +10,7 @@ class MCPClient:
         self.client_sessions: dict[str, ClientSession] = {}
         self.mcp_config = mcp_config
         self.exit_stack = AsyncExitStack()
+        self.tools: dict[str, Tool] = {}
 
     async def connect_to_servers(self):
         for server_name in self.mcp_config["mcpServers"]:
@@ -32,8 +33,20 @@ class MCPClient:
         await session.initialize()
         self.client_sessions[server_name] = session
 
+        tools = await session.list_tools()
+        for tool in tools.tools:
+            tool_name = f"{server_name}:{tool.name}"
+            self.tools[tool_name] = tool
+
+    async def get_tools(self):
+        return list(self.tools.keys())
+
     async def process_query_stream(
-        self, messages: list, new_messages: list, client_and_model: tuple[OpenAI, str]
+        self,
+        messages: list,
+        new_messages: list,
+        client_and_model: tuple[OpenAI, str],
+        tools: list[str],
     ):
         finished: bool = False
         thinking: bool = False
@@ -47,31 +60,28 @@ class MCPClient:
         message_content: str = ""
 
         available_tools = []
-        for server_name, session in self.client_sessions.items():
-            tools = (await session.list_tools()).tools
-            available_tools.extend(
-                [
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": f"{server_name}:{tool.name}",
-                            "description": tool.description,
-                            "parameters": getattr(
-                                tool,
-                                "inputSchema",
-                                {"type": "object", "properties": {}, "required": []},
-                            ),
-                        },
-                    }
-                    for tool in tools
-                ]
+        for tool_name in tools:
+            tool = self.tools[tool_name]
+            available_tools.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool_name,
+                        "description": tool.description,
+                        "parameters": getattr(
+                            tool,
+                            "inputSchema",
+                            {"type": "object", "properties": {}, "required": []},
+                        ),
+                    },
+                }
             )
 
         client, model_name = client_and_model
         model_stream = client.chat.completions.create(
             model=model_name,
             messages=messages,
-            tools=available_tools,
+            tools=available_tools if available_tools else NOT_GIVEN,
             stream=True,
         )
 

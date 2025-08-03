@@ -12,6 +12,10 @@ logging.disable(logging.CRITICAL)
 
 
 query = """
+现在是什么时候
+"""
+
+"""
 先帮我分析这段文本和关键词之间的相关性：
 ```
 keywords = ["What is BGE M3?", "Defination of BM25"]
@@ -37,6 +41,8 @@ async def main():
     try:
         await mcp_client.connect_to_servers()
 
+        print(await mcp_client.get_tools())
+
         messages = [{"role": "user", "content": query}]
         new_messages = []
 
@@ -44,6 +50,7 @@ async def main():
             messages,
             new_messages,
             client_provider.get_client_and_model("aliyun.qwen-plus"),
+            ["time:get_current_time"],
         ):
             print(chunk, end="", flush=True)
     finally:

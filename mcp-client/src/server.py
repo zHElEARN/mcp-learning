@@ -8,6 +8,7 @@ from sqlmodel import SQLModel
 from db.db import engine
 from routers.conversations import router as conversation_router
 from routers.models import router as model_router
+from routers.tools import router as tools_router
 from services.mcp_service import mcp_client
 
 
@@ -34,6 +35,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(conversation_router)
+    app.include_router(tools_router)
     app.include_router(model_router)
 
     return app

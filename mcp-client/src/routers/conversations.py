@@ -18,6 +18,7 @@ router = APIRouter(prefix="/conversations")
 class QueryModel(BaseModelWithConfig):
     query: str
     model_name: str
+    tools: list[str]
 
 
 class ConversationCreate(BaseModelWithConfig):
@@ -176,6 +177,7 @@ async def chat(
             messages,
             new_messages,
             client_provider.get_client_and_model(query.model_name),
+            query.tools,
         ):
             yield f"data: {json.dumps({'content': chunk})}\n\n"
             complete_content += chunk
