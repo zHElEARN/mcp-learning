@@ -188,6 +188,7 @@ export default function ConversationPage() {
 
     chatContainer.addEventListener("scroll", handleScroll);
     return () => chatContainer.removeEventListener("scroll", handleScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatContainerRef.current]);
 
   return (
