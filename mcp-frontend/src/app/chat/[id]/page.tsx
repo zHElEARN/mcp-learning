@@ -3,7 +3,7 @@
 import { ChatInput } from "@/components/chat-input";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { apiClient, type Message } from "@/lib/api";
-import { Bot, User } from "lucide-react";
+import { Bot, ChevronDown, ChevronUp, User } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +21,21 @@ export default function ConversationPage() {
   const [isUserScrolled, setIsUserScrolled] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // 滑动到顶部
+  const scrollToTop = () => {
+    chatContainerRef.current?.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // 滑动到底部
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
 
   // 获取对话数据
   useEffect(() => {
@@ -42,7 +57,10 @@ export default function ConversationPage() {
     }
   }, [conversationId]);
 
-  const handleSendMessage = async (messageContent: string, tools?: string[]) => {
+  const handleSendMessage = async (
+    messageContent: string,
+    tools?: string[]
+  ) => {
     if (isLoading || !messageContent.trim()) return;
 
     // 重置手动滚动状态，确保新消息能自动滚动
@@ -213,8 +231,25 @@ export default function ConversationPage() {
           {/* 对话区域 */}
           <div
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto p-4 custom-scrollbar"
+            className="flex-1 overflow-y-auto p-4 custom-scrollbar relative"
           >
+            <div className="fixed right-4 bottom-4 z-10 flex flex-col gap-2">
+              <button
+                onClick={scrollToTop}
+                className="w-10 h-10 bg-white dark:bg-background border border-gray-200 dark:border-gray-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                title="滑动到顶部"
+              >
+                <ChevronUp className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
+              <button
+                onClick={scrollToBottom}
+                className="w-10 h-10 bg-white dark:bg-background border border-gray-200 dark:border-gray-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                title="滑动到底部"
+              >
+                <ChevronDown className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
+            </div>
+
             <div className="max-w-4xl mx-auto space-y-6">
               {messageList.map((message) => (
                 <div
