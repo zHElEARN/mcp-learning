@@ -143,7 +143,9 @@ export default function ConversationPage() {
   useEffect(() => {
     // 只有在用户没有手动滚动时才自动滚动
     if (!isUserScrolled) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "instant",
+      });
     }
   }, [messageList, isUserScrolled]);
 

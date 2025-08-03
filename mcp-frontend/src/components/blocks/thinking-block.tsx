@@ -4,7 +4,7 @@ import { ChevronDown, Sparkle } from "lucide-react";
 import { useState } from "react";
 
 export function ThinkingBlock({ children }: { children?: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <div className="border border-border rounded-lg bg-card shadow-sm w-full my-2">
