@@ -208,7 +208,10 @@ export default function ConversationPage() {
       {!isLoadingData && !error && (
         <>
           {/* 对话区域 */}
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4">
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto p-4 custom-scrollbar"
+          >
             <div className="max-w-4xl mx-auto space-y-6">
               {messageList.map((message) => (
                 <div
